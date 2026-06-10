@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You, Forever.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-deep: #05050A;
+            --text-main: #EAEAEA;
+            --text-muted: #A0A0B0;
+            --accent-gold: #D4AF37;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Hardware Accelerated Canvas Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Utility */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-family: var(--font-heading);
+            font-weight: 400;
+            color: #fff;
+        }
+        
+        .accent {
+            color: var(--accent-gold);
+            font-style: italic;
+        }
+
+        .hinglish-quote {
+            font-family: var(--font-heading);
+            font-style: italic;
+            color: var(--accent-gold);
+            opacity: 0.8;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        /* Scroll Reveal Utility */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1), transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+            will-change: opacity, transform;
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Countdown Overlay */
+        #countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-deep);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 2s ease-in-out;
+        }
+        
+        .countdown-title {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+        }
+
+        #timer {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 4px;
+            color: var(--accent-gold);
+        }
+
+        /* Main Content Container */
+        #main-wrapper {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 2s ease-in;
+        }
+
+        section {
+            padding: 6rem 10vw;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Cinematic Intro */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 2rem;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, var(--accent-gold), transparent);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            margin-bottom: 4rem;
+            position: relative;
+            width: 50%;
+            padding: 0 3rem;
+        }
+
+        .timeline-item:nth-child(odd) {
+            left: 0;
+            text-align: right;
+        }
+
+        .timeline-item:nth-child(even) {
+            left: 50%;
+        }
+
+        .timeline-date {
+            color: var(--accent-gold);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        /* 3D Quiz Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            perspective: 1000px;
+        }
+
+        .card-container {
+            width: 100%;
+            height: 350px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .quiz-btns {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--accent-gold);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: var(--font-body);
+        }
+
+        .btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-deep);
+        }
+
+        .quiz-response {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--accent-gold);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        /* Confessions */
+        .confessions-container {
+            max-width: 700px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .confession-line {
+            font-size: 1.5rem;
+            margin-bottom: 4rem;
+            font-family: var(--font-heading);
+            color: var(--text-muted);
+        }
+
+        /* Visual Memories */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .memory-card {
+            text-align: center;
+            transition: transform 0.4s ease;
+        }
+
+        .memory-card:hover {
+            transform: scale(1.05);
+        }
+
+        .memory-img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #111;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            border: 4px solid rgba(255,255,255,0.05);
+        }
+
+        .memory-caption {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        /* Media */
+        .media-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #111;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .audio-player {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .play-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-deep);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--accent-gold);
+            width: 0%;
+            border-radius: 2px;
+        }
+
+        /* Roadmap */
+        .roadmap {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .road-stop {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            position: relative;
+        }
+
+        .road-year {
+            font-size: 2rem;
+            font-family: var(--font-heading);
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+        }
+
+        /* Game */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 2rem auto;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--accent-gold);
+            font-family: var(--font-heading);
+            transition: background 0.3s;
+        }
+
+        .cell:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        #game-message {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--accent-gold);
+            min-height: 30px;
+            margin-top: 1rem;
+        }
+
+        /* Wishlist */
+        .wish-form {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-main);
+            font-family: var(--font-body);
+            resize: vertical;
+            min-height: 150px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .submit-btn {
+            background: var(--accent-gold);
+            color: var(--bg-deep);
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        /* Responsive timeline */
+        @media (max-width: 768px) {
+            .timeline::before { left: 0; }
+            .timeline-item { width: 100%; padding-left: 2rem; text-align: left !important; left: 0 !important; }
+            .media-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="bypass" style="position: absolute; top: 0; left: 0; width: 80px; height: 80px; opacity: 0; cursor: pointer; z-index: 10000;" onclick="unlockWebsite()"></div>
+
+    <div id="countdown-overlay">
+        <h1 class="countdown-title">Wait for it, Betuu...</h1>
+        <div id="timer">00:00:00:00</div>
+    </div>
+
+    <div id="main-wrapper">
+        
+        <section class="hero reveal">
+            <h1>Happy Birthday, <span class="accent">Baby</span></h1>
+            <p>Welcome to your universe. A place built of memories, code, and an endless amount of love.</p>
+            <p class="hinglish-quote">"Meri har saans mein tu basi hai, jaise raat ke aanchal mein chaand."</p>
+        </section>
+
+        <section class="reveal">
+            <h2 style="text-align: center; margin-bottom: 4rem; font-size: 2.5rem;">Our Journey</h2>
+            <div class="timeline">
+                <div class="timeline-item reveal">
+                    <span class="timeline-date">August 14, 2022</span>
+                    <h3>Our First Call</h3>
+                    <p class="text-muted" style="margin-top: 0.5rem;">Two strangers bridging the silence, completely unaware that a single 'hello' was writing the first line of our forever.</p>
+                </div>
+                <div class="timeline-item reveal">
+                    <span class="timeline-date">September 03, 2022</span>
+                    <h3>Our First Chat</h3>
+                    <p class="text-muted" style="margin-top: 0.5rem;">Words flowing through a screen, but somehow feeling closer than anyone ever had before.</p>
+                </div>
+                <div class="timeline-item reveal">
+                    <span class="timeline-date">November 12, 2022</span>
+                    <h3>Late-Night Talks</h3>
+                    <p class="text-muted" style="margin-top: 0.5rem;">Trading sleep for secrets, painting our dreams in the quiet hours of the night.</p>
+                </div>
+                <div class="timeline-item reveal">
+                    <span class="timeline-date">February 14, 2023</span>
+                    <h3>Our First Meet</h3>
+                    <p class="text-muted" style="margin-top: 0.5rem;">Seeing you walk toward me, the world around us blurred, and everything finally made perfect sense.</p>
+                </div>
+                <div class="timeline-item reveal">
+                    <span class="timeline-date">March 01, 2023</span>
+                    <h3>First Little Kiss</h3>
+                    <p class="text-muted" style="margin-top: 0.5rem;">A gentle stolen moment where time stopped, and my heart permanently relocated to yours.</p>
+                </div>
+            </div>
+            <p class="hinglish-quote reveal" style="margin-top: 4rem;">"Tere hone se hi mera wajood hai, tu meri rooh ka sukoon hai."</p>
+        </section>
+
+        <section class="reveal">
+            <h2 style="text-align: center; margin-bottom: 1rem; font-size: 2.5rem;">Why I Choose You</h2>
+            <p class="hinglish-quote">"Tujhe dekhte hi saari duniya tham jaati hai."</p>
+            
+            <div class="cards-grid" style="margin-top: 3rem;">
+                
+                <div class="card-container glass" onclick="flipCard(this)">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3>Because you listen.</h3>
+                            <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.6;">(Click to reveal)</p>
+                        </div>
+                        <div class="card-back">
+                            <p>You hear the words I don't even say.</p>
+                            <p style="margin-top: 1rem; font-weight: bold;">Do I talk too much?</p>
+                            <div class="quiz-btns">
+                                <button class="btn" onclick="handleQuiz(event, this, 'Always. +1 Love 💖')">Yes</button>
+                                <button class="btn" onclick="handleQuiz(event, this, 'Liar. +100 Love 💖')">No</button>
+                            </div>
+                            <div class="quiz-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-container glass" onclick="flipCard(this)">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3>Because you care.</h3>
+                            <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.6;">(Click to reveal)</p>
+                        </div>
+                        <div class="card-back">
+                            <p>You heal parts of me I didn't know were broken.</p>
+                            <p style="margin-top: 1rem; font-weight: bold;">Am I the lucky one?</p>
+                            <div class="quiz-btns">
+                                <button class="btn" onclick="handleQuiz(event, this, 'Undeniably. ✨')">Yes</button>
+                                <button class="btn" onclick="handleQuiz(event, this, 'We both are. ✨')">Maybe</button>
+                            </div>
+                            <div class="quiz-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-container glass" onclick="flipCard(this)">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3>Because of your smile.</h3>
+                            <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.6;">(Click to reveal)</p>
+                        </div>
+                        <div class="card-back">
+                            <p>It is genuinely my favorite view on earth.</p>
+                            <p style="margin-top: 1rem; font-weight: bold;">Did I make you smile just now?</p>
+                            <div class="quiz-btns">
+                                <button class="btn" onclick="handleQuiz(event, this, 'Mission Accomplished. 🥰')">Yes</button>
+                                <button class="btn" onclick="handleQuiz(event, this, 'I will try harder. 🥺')">Almost</button>
+                            </div>
+                            <div class="quiz-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-container glass" onclick="flipCard(this)">
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <h3>Because you are you.</h3>
+                            <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.6;">(Click to reveal)</p>
+                        </div>
+                        <div class="card-back">
+                            <p>Flawed, perfect, and entirely mine.</p>
+                            <p style="margin-top: 1rem; font-weight: bold;">Will you stay forever?</p>
+                            <div class="quiz-btns">
+                                <button class="btn" onclick="handleQuiz(event, this, 'Promise sealed. 💍')">Yes</button>
+                                <button class="btn" onclick="handleQuiz(event, this, 'No escape now. 💍')">Always</button>
+                            </div>
+                            <div class="quiz-response"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="reveal">
+            <div class="confessions-container">
+                <p class="confession-line reveal">I never believed in magic until I looked into your eyes.</p>
+                <p class="confession-line reveal">Every tough day is worth it, just knowing you're at the end of it.</p>
+                <p class="confession-line reveal">You are my safe space, my wildest adventure, and my quietest peace.</p>
+                <p class="confession-line reveal">I don't just love you; I am entirely, completely devoted to you.</p>
+                <p class="hinglish-quote reveal">"Khuda ne tujhe sirf mere liye banaya hai, meri aakhri manzil tu hi hai."</p>
+            </div>
+        </section>
+
+        <section class="reveal">
+            <h2 style="text-align: center; margin-bottom: 4rem; font-size: 2.5rem;">Fragments of Us</h2>
+            <div class="gallery-grid">
+                <div class="memory-card glass">
+                    <img src="https://images.unsplash.com/photo-1518199266791-5375a83164ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Memory" class="memory-img">
+                    <p class="memory-caption">The day my world changed.</p>
+                </div>
+                <div class="memory-card glass">
+                    <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Memory" class="memory-img">
+                    <p class="memory-caption">Lost in your laughter, Krinuu.</p>
+                </div>
+                <div class="memory-card glass">
+                    <img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Memory" class="memory-img">
+                    <p class="memory-caption">A quiet sunset, a loud heartbeat.</p>
+                </div>
+                <div class="memory-card glass">
+                    <img src="https://images.unsplash.com/photo-1474552226712-ac0f0961a954?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" alt="Memory" class="memory-img">
+                    <p class="memory-caption">Just us, against everything.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="reveal">
+            <h2 style="text-align: center; margin-bottom: 4rem; font-size: 2.5rem;">For Your Eyes & Ears</h2>
+            
+            <div class="media-grid">
+                <div class="video-placeholder glass">
+                    <p>[ Video Edit 1 Placeholder ]</p>
+                </div>
+                <div class="video-placeholder glass">
+                    <p>[ Video Edit 2 Placeholder ]</p>
+                </div>
+            </div>
+
+            <div class="glass audio-player">
+                <button class="play-btn" id="audio-play" onclick="toggleAudio()">▶</button>
+                <div style="flex-grow: 1;">
+                    <p style="margin-bottom: 0.5rem; font-family: var(--font-heading);">A Message for Smurff 🎙️</p>
+                    <div class="progress-bar" onclick="seekAudio(event)">
+                        <div class="progress-fill" id="audio-progress"></div>
+                    </div>
+                </div>
+            </div>
+            <audio id="love-audio" src=""></audio>
+        </section>
+
+        <section class="reveal">
+            <h2 style="text-align: center; margin-bottom: 4rem; font-size: 2.5rem;">The Horizon</h2>
+            <div class="roadmap">
+                <div class="road-stop glass">
+                    <div class="road-year">5 YRS</div>
+                    <p>Building our foundation, traveling to the places we pinned on our boards.</p>
+                </div>
+                <div class="road-stop glass">
+                    <div class="road-year">10 YRS</div>
+                    <p>A home filled with our chaos, warm lights, and an undeniable peace.</p>
+                </div>
+                <div class="road-stop glass">
+                    <div class="road-year">15 YRS</div>
+                    <p>Looking back at storms we weathered, holding hands even tighter.</p>
+                </div>
+                <div class="road-stop glass">
+                    <div class="road-year">∞</div >
+                    <p>A lifetime. Just you, me, and the legacy of an imperfect, beautiful love.</p>
+                </div>
+            </div>
+            <p class="hinglish-quote reveal" style="margin-top: 4rem;">"Tere bina meri kahani adhoori hai, tu hi mera aagaz, tu hi mera anjaam."</p>
+        </section>
+
+        <section class="reveal">
+            <h2 style="text-align: center; margin-bottom: 1rem; font-size: 2.5rem;">Beat Me, Butkii</h2>
+            <p style="text-align: center; color: var(--text-muted); max-width: 600px; margin: 0 auto;">Win this simple game of Tic-Tac-Toe to unlock a hidden promise.</p>
+            
+            <div class="glass game-board" id="tictactoe">
+                <div class="cell" onclick="makeMove(0)"></div>
+                <div class="cell" onclick="makeMove(1)"></div>
+                <div class="cell" onclick="makeMove(2)"></div>
+                <div class="cell" onclick="makeMove(3)"></div>
+                <div class="cell" onclick="makeMove(4)"></div>
+                <div class="cell" onclick="makeMove(5)"></div>
+                <div class="cell" onclick="makeMove(6)"></div>
+                <div class="cell" onclick="makeMove(7)"></div>
+                <div class="cell" onclick="makeMove(8)"></div>
+            </div>
+            <div id="game-message">Your turn (X)</div>
+        </section>
+
+        <section class="reveal" style="margin-bottom: 6rem;">
+            <h2 style="text-align: center; margin-bottom: 2rem; font-size: 2.5rem;">Make A Wish</h2>
+            <div class="glass wish-form">
+                <p style="text-align: center; color: var(--text-muted);">Write down your deepest wish. It stays here on your device forever, and sends a whisper to my inbox so I can make it come true.</p>
+                <textarea id="wish-input" placeholder="My wish is..."></textarea>
+                <button class="submit-btn" onclick="submitWish()">Seal The Wish 💌</button>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // 1. CANVAS BACKGROUND (Constellations)
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.3;
+                this.vy = (Math.random() - 0.5) * 0.3;
+                this.radius = Math.random() * 1.5 + 0.5;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx = -this.vx;
+                if (this.y < 0 || this.y > height) this.vy = -this.vy;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(212, 175, 55, 0.6)';
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 100; i++) particles.push(new Particle());
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(130, 100, 200, ${0.2 - dist/600})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+        animateCanvas();
+
+        // 2. COUNTDOWN LOGIC
+        const targetDate = new Date("June 26, 2026 00:01:00").getTime();
+        const timerEl = document.getElementById("timer");
+        const overlay = document.getElementById("countdown-overlay");
+        const mainWrapper = document.getElementById("main-wrapper");
+        let countdownInterval;
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance <= 0) {
+                clearInterval(countdownInterval);
+                unlockWebsite();
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            timerEl.innerHTML = `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        countdownInterval = setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        function unlockWebsite() {
+            clearInterval(countdownInterval);
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.remove();
+                mainWrapper.style.visibility = 'visible';
+                mainWrapper.style.opacity = '1';
+                initScrollReveal();
+            }, 2000);
+        }
+
+        // 3. INTERSECTION OBSERVER (Scroll Fade Ins)
+        function initScrollReveal() {
+            const reveals = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            reveals.forEach(reveal => observer.observe(reveal));
+        }
+
+        // 4. 3D CARD QUIZ LOGIC
+        function flipCard(el) {
+            if(!el.classList.contains('flipped')) {
+                el.classList.add('flipped');
+            }
+        }
+
+        function handleQuiz(e, btn, message) {
+            e.stopPropagation(); // Prevent card from flipping back
+            const responseDiv = btn.parentElement.nextElementSibling;
+            responseDiv.innerHTML = message;
+            responseDiv.style.opacity = '1';
+            
+            // Visual feedback on buttons
+            const btns = btn.parentElement.querySelectorAll('.btn');
+            btns.forEach(b => {
+                b.style.background = 'transparent';
+                b.style.color = 'var(--text-main)';
+            });
+            btn.style.background = 'var(--accent-gold)';
+            btn.style.color = 'var(--bg-deep)';
+        }
+
+        // 5. AUDIO PLAYER LOGIC
+        const audio = document.getElementById("love-audio");
+        const playBtn = document.getElementById("audio-play");
+        const progressFill = document.getElementById("audio-progress");
+        let isPlaying = false;
+
+        // Mock audio progression since src is empty
+        let mockProgress = 0;
+        let mockInterval;
+
+        function toggleAudio() {
+            if (isPlaying) {
+                playBtn.innerHTML = "▶";
+                clearInterval(mockInterval);
+                // audio.pause(); 
+            } else {
+                playBtn.innerHTML = "⏸";
+                // audio.play().catch(e => console.log("Audio src needed"));
+                mockInterval = setInterval(() => {
+                    mockProgress += 0.5;
+                    if(mockProgress >= 100) mockProgress = 0;
+                    progressFill.style.width = mockProgress + "%";
+                }, 1000);
+            }
+            isPlaying = !isPlaying;
+        }
+
+        function seekAudio(e) {
+            const rect = e.target.closest('.progress-bar').getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = (x / rect.width) * 100;
+            progressFill.style.width = percentage + "%";
+            mockProgress = percentage;
+        }
+
+        // 6. PROMISE GAME (TIC-TAC-TOE)
+        let board = ["", "", "", "", "", "", "", "", ""];
+        let gameActive = true;
+        const msgEl = document.getElementById("game-message");
+        const cells = document.querySelectorAll(".cell");
+
+        function makeMove(index) {
+            if (board[index] !== "" || !gameActive) return;
+
+            // Player Move
+            board[index] = "X";
+            cells[index].innerText = "X";
+            cells[index].style.color = "#EAEAEA";
+
+            if (checkWin("X")) {
+                winSequence();
+                return;
+            }
+
+            if (!board.includes("")) {
+                msgEl.innerText = "A draw! But you still win my heart. Try again.";
+                setTimeout(resetGame, 2000);
+                return;
+            }
+
+            // Bot Move (Simple Random)
+            msgEl.innerText = "My turn...";
+            gameActive = false;
+            
+            setTimeout(() => {
+                let emptyIndices = board.map((val, i) => val === "" ? i : null).filter(val => val !== null);
+                let botMove = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+                
+                board[botMove] = "O";
+                cells[botMove].innerText = "O";
+                cells[botMove].style.color = "var(--accent-gold)";
+                
+                if (checkWin("O")) {
+                    msgEl.innerText = "I won! But I'll let you try again. 😉";
+                    setTimeout(resetGame, 2000);
+                } else {
+                    msgEl.innerText = "Your turn (X)";
+                    gameActive = true;
+                }
+            }, 800);
+        }
+
+        function checkWin(player) {
+            const winConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Cols
+                [0, 4, 8], [2, 4, 6]             // Diagonals
+            ];
+            return winConditions.some(comb => comb.every(i => board[i] === player));
+        }
+
+        function winSequence() {
+            gameActive = false;
+            msgEl.innerHTML = `<span style="color: #fff;">You Win! 🎉</span><br><br>
+            <i style="font-size:1rem; color:var(--text-muted); font-family:var(--font-heading);">
+            "I promise to lose to you in every game, every argument, every stubborn moment... if it just means getting to see you smile."
+            </i>`;
+            fireConfetti();
+        }
+
+        function resetGame() {
+            board = ["", "", "", "", "", "", "", "", ""];
+            cells.forEach(c => c.innerText = "");
+            msgEl.innerText = "Your turn (X)";
+            gameActive = true;
+        }
+
+        // Simple DOM Confetti
+        function fireConfetti() {
+            const colors = ['#D4AF37', '#8264C8', '#FFFFFF'];
+            for(let i=0; i<50; i++) {
+                let conf = document.createElement('div');
+                conf.style.position = 'fixed';
+                conf.style.width = '10px';
+                conf.style.height = '10px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.top = '-10px';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.opacity = Math.random();
+                conf.style.transform = `rotate(${Math.random() * 360}deg)`;
+                conf.style.zIndex = '9999';
+                document.body.appendChild(conf);
+
+                let fallDuration = Math.random() * 3 + 2;
+                conf.animate([
+                    { transform: `translate3d(0,0,0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translate3d(${Math.random()*100 - 50}px, 100vh, 0) rotate(720deg)`, opacity: 0 }
+                ], {
+                    duration: fallDuration * 1000,
+                    easing: 'cubic-bezier(.37,0,.63,1)'
+                }).onfinish = () => conf.remove();
+            }
+        }
+
+        // 7. WISH LIST LOGIC (LocalStorage + Mailto)
+        const wishInput = document.getElementById("wish-input");
+        
+        // Load saved wish
+        window.onload = () => {
+            const savedWish = localStorage.getItem("betuus_wish");
+            if(savedWish) wishInput.value = savedWish;
+        };
+
+        function submitWish() {
+            const text = wishInput.value.trim();
+            if(!text) {
+                alert("Write something first, Baby.");
+                return;
+            }
+            
+            // Save locally
+            localStorage.setItem("betuus_wish", text);
+            
+            // Trigger Email
+            const myEmail = "your.email@example.com"; // Replace with actual email
+            const subject = encodeURIComponent("My Wish from the Website ❤️");
+            const body = encodeURIComponent(text);
+            window.location.href = `mailto:${myEmail}?subject=${subject}&body=${body}`;
+            
+            // Visual feedback
+            const btn = document.querySelector('.submit-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Wish Sealed & Sent ✨";
+            btn.style.background = "#fff";
+            btn.style.color = "var(--bg-deep)";
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = "var(--accent-gold)";
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
